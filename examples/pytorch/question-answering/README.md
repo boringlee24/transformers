@@ -14,6 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
+# How to run on discovery
+```bash
+accelerate config
+```
+
+and reply to the questions asked.
+
+You can launch training with
+
+```bash
+accelerate launch run_qa_no_trainer.py \
+  --model_name_or_path <model architecture> \
+  --dataset_name squad \
+  --max_seq_length 384 \
+  --doc_stride 128 \
+```
+
 # Question answering
 
 This folder contains several scripts that showcase how to fine-tune a 🤗 Transformers model on a question answering dataset,

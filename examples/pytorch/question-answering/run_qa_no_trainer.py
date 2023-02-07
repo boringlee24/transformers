@@ -54,7 +54,11 @@ from transformers import (
 from transformers.utils import check_min_version, get_full_repo_name, send_example_telemetry
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
-
+import sys
+sys.path.append('/work/li.baol/GIT/power_monitor')
+from carbontracker.tracker import CarbonTrackerManual
+from time import perf_counter
+import json
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.27.0.dev0")
@@ -300,6 +304,15 @@ def parse_args():
             "Only applicable when `--with_tracking` is passed."
         ),
     )
+    parser.add_argument('--iter-limit', default=2000, type=int,
+                        help='Number of iterations as a limit for benchmarking purpose')
+    parser.add_argument('--benchmarking', action='store_true',
+                        help='Benchmarking mode, terminates after certain number if iterations')
+    parser.add_argument('--gpu-type', default='unspecified_gpu', type=str,
+                        help='GPU type used for benchmarking')
+    parser.add_argument('--num-gpu', default=4, type=int,
+                        help='Number of GPUs used for benchmarking')
+    
     args = parser.parse_args()
 
     # Sanity checks
@@ -326,9 +339,15 @@ def parse_args():
 
     return args
 
+skip_iters = 10
+iteration_ms = []
 
 def main():
     args = parse_args()
+
+    if args.benchmarking:
+        save_dir = f'benchmark_logs/{args.num_gpu}x{args.gpu_type}'
+        Path(save_dir).mkdir(parents=True, exist_ok=True)
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
@@ -834,6 +853,8 @@ def main():
         model.train()
         if args.with_tracking:
             total_loss = 0
+
+        end = perf_counter()
         for step, batch in enumerate(train_dataloader):
             # We need to skip steps until we reach the resumed step
             if args.resume_from_checkpoint and epoch == starting_epoch:
@@ -858,6 +879,22 @@ def main():
                 progress_bar.update(1)
                 completed_steps += 1
 
+            iter_time = perf_counter() - end
+            iteration_ms.append(iter_time*1000)
+            if args.benchmarking and len(iteration_ms) == skip_iters and accelerator.is_local_main_process:
+                tracker = CarbonTrackerManual(epochs=1, monitor_epochs=1, update_interval=1,
+                        components='all', epochs_before_pred=1, verbose=2)
+                tracker.tracker.pue_manual = 1
+                tracker.intensity_updater.ci_manual = 300    
+                tracker.epoch_start()
+
+            if args.benchmarking and len(iteration_ms) > skip_iters+args.iter_limit:
+                if accelerator.is_local_main_process:
+                    tracker.epoch_end(f'{save_dir}/carbon_{args.model_name_or_path}')
+                    with open(f'{save_dir}/time_{args.model_name_or_path}.json', 'w') as f:
+                        json.dump(iteration_ms[skip_iters:], f, indent=4)
+                sys.exit()
+
             if isinstance(checkpointing_steps, int):
                 if completed_steps % checkpointing_steps == 0:
                     output_dir = f"step_{completed_steps }"
@@ -867,6 +904,7 @@ def main():
 
             if completed_steps >= args.max_train_steps:
                 break
+            end = perf_counter()
 
         if args.checkpointing_steps == "epoch":
             output_dir = f"epoch_{epoch}"
