@@ -26,7 +26,7 @@
             "args": ["run_qa_no_trainer.py", "--model_name_or_path", "bert-base-uncased", 
                     "--dataset_name", "squad", "--max_seq_length", 
                     "384", "--doc_stride", "128", "--benchmarking",
-                    "--gpu-type", "v100", "--num-gpu", "4", "--iter-limit", "200"] //, "--max_train_samples", "100"]
+                    "--gpu-type", "v100", "--num-gpu", "2", "--iter-limit", "200"] //, "--max_train_samples", "100"]
         }
 
     ]

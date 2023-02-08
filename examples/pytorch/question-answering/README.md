@@ -21,6 +21,11 @@ accelerate config
 
 and reply to the questions asked.
 
+If using less GPUs than the node has (e.g., 2 GPUs), cannot answer all for the following question, but answer the GPU IDs instead:
+```
+What GPU(s) (by id) should be used for training on this machine as a comma-seperated list? [all]:0,1
+```
+
 You can launch training with
 
 ```bash
