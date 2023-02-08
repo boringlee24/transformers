@@ -55,7 +55,12 @@ from transformers.utils import check_min_version, get_full_repo_name, send_examp
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
 import sys
-sys.path.append('/work/li.baol/GIT/power_monitor')
+if Path('/workspace/power_monitor').is_dir():
+    sys.path.append('/workspace/power_monitor')
+else:
+    FILE=Path(__file__).resolve()
+    ROOT=FILE.parents[4]
+    sys.path.append(f'{str(ROOT)}/power_monitor')
 from carbontracker.tracker import CarbonTrackerManual
 from time import perf_counter
 import json
