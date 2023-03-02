@@ -895,8 +895,9 @@ def main():
 
             if args.benchmarking and len(iteration_ms) > skip_iters+args.iter_limit:
                 if accelerator.is_local_main_process:
-                    tracker.epoch_end(f'{save_dir}/carbon_{args.model_name_or_path}')
-                    with open(f'{save_dir}/time_{args.model_name_or_path}.json', 'w') as f:
+                    model_name = args.model_name_or_path.replace('/', '-')
+                    tracker.epoch_end(f'{save_dir}/carbon_{model_name}')
+                    with open(f'{save_dir}/time_{model_name}.json', 'w') as f:
                         json.dump(iteration_ms[skip_iters:], f, indent=4)
                 sys.exit()
 
