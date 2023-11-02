@@ -24,6 +24,8 @@ The benchmark is used for our SC'23 paper ``Toward Sustainable HPC: Carbon Footp
 
 Please refer to the original [huggingface transformer repository](https://github.com/huggingface/transformers) for the dependencies.
 
+To measure carbon emission, this repository uses [modified carbon tracker](https://github.com/boringlee24/power_monitor).
+
 ## Benchmark Scripts and Data
 
 We use the pytorch question-answering benchmark ``examples/pytorch/question-answering/run_qa_no_trainer.py``
